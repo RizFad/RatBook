@@ -51,7 +51,8 @@ class _CategoryPageState extends State<CategoryPage> {
       children: [
         Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: 
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
             Switch(
