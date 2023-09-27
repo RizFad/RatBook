@@ -1,15 +1,24 @@
+import 'package:flutter/src/foundation/key.dart';
+import 'package:flutter/src/widgets/framework.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:rat_book/models/database.dart';
+import 'package:rat_book/models/transaction_with_category.dart';
+import 'package:rat_book/pages/transaction_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final DateTime selectedDate;
+  const HomePage({Key? key, required this.selectedDate}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+  final AppDatabase database = AppDatabase();
+
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -99,58 +108,72 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Card(
-                elevation: 10,
-                child: ListTile(
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.delete),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      Icon(Icons.edit)
-                    ],
-                  ),
-                  title: Text("Rp. 40.000"),
-                  subtitle: Text("Kabel HDMI"),
-                  leading: Container(
-                    child: Icon(Icons.upload, color: Colors.red),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8)),
-                  ),              
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Card(
-                elevation: 10,
-                child: ListTile(
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.delete),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      Icon(Icons.edit)
-                    ],
-                  ),
-                  title: Text("Rp.650.000"),
-                  subtitle: Text("Gaji Pertama"),
-                  leading: Container(
-                    child: Icon(Icons.download, color: Colors.green),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8)),
-                  ),              
-                ),
-              ),
-            )
+            StreamBuilder<List<TransactionWithCategory>>(
+              stream: database.getTransactionByDateRepo(widget.selectedDate), 
+              builder: (context, snapshot){
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }else{
+                  if (snapshot.hasData) {
+                    if (snapshot.data!.length > 0) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: snapshot.data!.length,
+                        itemBuilder: (context, index){
+                          final transactionWithCategory = snapshot.data![index];
+                          return  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    child: Card(
+                                      elevation: 10,
+                                      child: ListTile(
+                                        trailing: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(onPressed: () async {
+                                              await database.deleteTransactionRepo(snapshot.data![index].transaction.id);
+                                              setState(() {
+                                                
+                                              });
+                                            }, icon: Icon(Icons.delete)),
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            IconButton(icon: Icon(Icons.edit),
+                                            onPressed: (){
+                                              Navigator.of(context).push(MaterialPageRoute(builder: (context) => TransactionPage(transactionsWithCategory: snapshot.data![index],)));
+                                            },)
+                                          ],
+                                        ),
+                                        title: Text("Rp. " + transactionWithCategory.transaction.amount.toString()),
+                                        subtitle: Text(
+                                          transactionWithCategory.category.name + "(" + 
+                                          transactionWithCategory.transaction.description + ")"),
+                                        leading: Container(
+                                          child: 
+                                          (snapshot.data![index].category.type == 2) ?
+                                          Icon(Icons.upload, color: Colors.red) : Icon(Icons.download, color: Colors.green),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(8)),
+                                        ),              
+                                      ),
+                                    ),
+                                  );
+                        });
+                    }else{
+                      return Center(
+                        child: Text("Data Pembukuan masih kosong"),
+                      );
+                    }
+                  }else{
+                    return Center(
+                      child: Text("Tidak Ada Data"),
+                    );
+                  }
+                }
+            } ),
           ],
         )),
     );
