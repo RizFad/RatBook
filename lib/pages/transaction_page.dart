@@ -1,11 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:rat_book/models/database.dart';
-import 'package:rat_book/models/category.dart';
 import 'package:rat_book/models/transaction_with_category.dart';
-import 'package:rat_book/pages/category_page.dart';
 
 class TransactionPage extends StatefulWidget {
   final TransactionWithCategory? transactionsWithCategory;
@@ -27,18 +24,19 @@ class _TransactionPageState extends State<TransactionPage> {
   TextEditingController detailController = TextEditingController();
   Category? selectedCategory;
 
-  Future insert(int amount, DateTime date, String nameDetail, int categoryId) async{
-    DateTime now = DateTime.now();
-    final row = await database.into(database.transactions).insertReturning(
-      TransactionsCompanion.insert(
-        description: nameDetail, 
-        category_id: categoryId, 
-        transaction_date: date, 
-        amount: amount, 
-        created_at: now, 
-        updated_at: now
-        ));
-  }
+  Future<void> insert(int amount, DateTime date, String description, int categoryId) async {
+  DateTime now = DateTime.now();
+  await database.into(database.transactions).insert(
+    TransactionsCompanion.insert(
+      description: description, 
+      category_id: categoryId, 
+      transaction_date: date, 
+      amount: amount, 
+      created_at: now, 
+      updated_at: now
+    ),
+  );
+}
 
   Future<List<Category>>getAllCategory(int type) async{
       return await database.getAllCategoryRepo(type);
@@ -49,8 +47,7 @@ class _TransactionPageState extends State<TransactionPage> {
   }
 
   @override
-  void initState() {
-    // TODO: implement initState
+  void initState() {    
     if (widget.transactionsWithCategory != null) {
       updateTransactionView(widget.transactionsWithCategory!);
     }else{
@@ -203,23 +200,54 @@ class _TransactionPageState extends State<TransactionPage> {
               SizedBox(
                 height: 25,
               ),
-              Center(child: ElevatedButton(onPressed: () async {
-                (widget.transactionsWithCategory == null) ?
-                insert(
-                  int.parse(amountController.text), 
-                  DateTime.parse(dateController.text), 
-                  detailController.text, 
-                  selectedCategory!.id) : await update(
-                    widget.transactionsWithCategory!.transaction.id, 
-                    int.parse(amountController.text), 
-                    selectedCategory!.id, 
-                    DateTime.parse(dateController.text), 
-                    detailController.text);
-                    setState(() {
-                      
-                    });
-                  Navigator.pop(context, true);
-              }, child: Text("Save")))
+              Center(
+      child: Column(
+        children: [
+          ElevatedButton(
+            onPressed: () async {
+              if (widget.transactionsWithCategory == null) {
+                // Reset input fields
+                amountController.clear();
+                dateController.text = '2023-01-01';
+                detailController.clear();
+                // Set selected category to the first category in the list if available
+                final categories = await getAllCategory(type);
+                if (categories.isNotEmpty) {
+                  setState(() {
+                    selectedCategory = categories.first;
+                  });
+                }
+              } else {
+                // If in edit mode, reset to original values
+                updateTransactionView(widget.transactionsWithCategory!);
+              }
+            },
+            child: Text("Reset"),
+            style: ElevatedButton.styleFrom(primary: Colors.red),
+          ),
+          SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () async {
+              if (widget.transactionsWithCategory == null) {
+                await insert(
+                  int.parse(amountController.text),
+                  DateTime.parse(dateController.text),
+                  detailController.text,
+                  selectedCategory!.id,
+                );
+              } else {
+                await update(
+                  widget.transactionsWithCategory!.transaction.id,
+                  int.parse(amountController.text),
+                  selectedCategory!.id,
+                  DateTime.parse(dateController.text),
+                  detailController.text,
+                );
+              }
+              setState(() {});
+              Navigator.pop(context, true);
+            },
+            child: Text("Save"))])),
             ],
             ),
           ),

@@ -1,11 +1,9 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:rat_book/models/category.dart';
 import 'package:rat_book/models/database.dart';
 
 class CategoryPage extends StatefulWidget {
-  const CategoryPage({super.key});
+  const CategoryPage({Key? key}) : super(key: key);
 
   @override
   State<CategoryPage> createState() => _CategoryPageState();
@@ -28,13 +26,20 @@ class _CategoryPageState extends State<CategoryPage> {
   }
 
   Future update(int categoryId, String newName) async{
-    return await database.updateCategoryRepo(categoryId, newName);
+    await database.updateCategoryRepo(categoryId, newName);
   }
 
-  void openDialog(Category ? category){
-    
-    if (category != null) {
-      categoryNameController.text = category.name;
+  void openDialog(Category? category) {
+    // if (category != null) {
+    //   categoryNameController.text = category.name;
+    // }
+
+    bool isEditing = category != null;
+
+    if (isEditing) {
+      categoryNameController.text = category!.name;
+    } else {
+      categoryNameController.clear();
     }
 
     showDialog(
@@ -46,8 +51,8 @@ class _CategoryPageState extends State<CategoryPage> {
             child: Column(
               children: [
                 Text(
-                  (isExpense) ? "Data Pengeluaran" : "Data Pemasukan",
-                  style: GoogleFonts.montserrat(fontSize: 18, color: (isExpense) ? Colors.red : Colors.green),
+                  (isExpense) ? "Pengeluaran" : "Pemasukan",
+                  style: GoogleFonts.montserrat(fontSize: 14, color: (isExpense) ? Colors.red : Colors.green),
                 ),
                 SizedBox(
                   height: 10,
@@ -68,9 +73,7 @@ class _CategoryPageState extends State<CategoryPage> {
                   }else{
                     update(category.id, categoryNameController.text);
                   }
-
-                  insert(categoryNameController.text, isExpense ? 2 :1);
-                  Navigator.of(context, rootNavigator: true).pop('dialog');
+                  Navigator.of(context, rootNavigator: true).pop('dialog');                  
                   setState(() {});
                   categoryNameController.clear();
                 }, 
@@ -110,7 +113,7 @@ class _CategoryPageState extends State<CategoryPage> {
           ],),
         ),
         FutureBuilder<List<Category>>(
-          future: getAllCategory(type!),
+          future: getAllCategory(type),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Center(

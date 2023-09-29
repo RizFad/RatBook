@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:calendar_appbar/calendar_appbar.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:rat_book/pages/category_page.dart';
 import 'package:rat_book/pages/home_page.dart';
 import 'package:rat_book/pages/transaction_page.dart';
+import 'package:rat_book/pages/setting_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -20,8 +20,7 @@ class _MainPageState extends State<MainPage> {
   late int currentIndex;
 
   @override
-  void initState() {
-    // TODO: implement initState
+  void initState() {    
     updateView(0, DateTime.now());
     super.initState();
   }
@@ -71,19 +70,23 @@ class _MainPageState extends State<MainPage> {
         )),
       floatingActionButton: Visibility(
         visible: (currentIndex == 0) ? true : false,
-        child: FloatingActionButton(
-          onPressed: (){
-            Navigator.of(context).push(MaterialPageRoute(builder: (context) => TransactionPage(transactionsWithCategory: null),
-            )).then((value) {
-              setState(() {
-                
-              });
-            });
-          },
-        backgroundColor: Colors.teal,
-        child: Icon(Icons.add),
-        ),
-      ),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 30.0),
+          child:  FloatingActionButton(
+              onPressed: (){
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => TransactionPage(transactionsWithCategory: null),
+                )).then((value) {
+                  setState(() {
+                    
+                  });
+                });
+              },
+            backgroundColor: Colors.teal,
+            mini: true,
+            child: Icon(Icons.add),
+            ),
+          ),
+        ),      
       body: _children[currentIndex],
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
@@ -98,7 +101,19 @@ class _MainPageState extends State<MainPage> {
           ),
           IconButton(onPressed: (){
             updateView(1, null);
-          },icon: Icon(Icons.list_outlined))
+          },icon: Icon(Icons.list_outlined)
+          ),
+          SizedBox(
+            width: 20,
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => SettingPage(), 
+              ));
+            },
+            icon: Icon(Icons.settings), 
+          ),
           ],
         ),
       ),

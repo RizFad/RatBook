@@ -7,15 +7,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 import 'package:rat_book/models/category.dart';
 import 'package:rat_book/models/transaction.dart';
+import 'package:rat_book/models/users.dart';
 import 'package:rat_book/models/transaction_with_category.dart';
 
 part 'database.g.dart';
 
 // ... the TodoItems table definition stays the same
 
-@DriftDatabase(tables: [Categories,Transactions])
+@DriftDatabase(tables: [Categories,Transactions,Users])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
+  AppDatabase() : super(_openConnection());  
 
   @override
   int get schemaVersion => 1;
@@ -61,9 +62,31 @@ class AppDatabase extends _$AppDatabase {
   Future deleteTransactionRepo(int id) async{
     return (delete(transactions)..where((tbl) => tbl.id.equals(id))).go();
   }
-}
 
-  
+  Future insertUserRepo(String username, String password) async {
+    final user = UsersCompanion(
+      username: Value(username),
+      password: Value(password),
+      created_at: Value(DateTime.now()),
+      updated_at: Value(DateTime.now()),
+    );
+
+    final insertedUser = await into(users).insert(user);
+    return insertedUser;
+    
+  }
+
+  Future<User> findUserByUsername(String username) async {
+    final query = select(users)..where((u) => u.username.equals(username));
+    return await query.getSingle();
+  }
+
+  Future updateUserPassword(int userId, String newPassword) async {
+    return (update(users)..where((tbl) => tbl.id.equals(userId))).write(UsersCompanion(
+      password: Value(newPassword)));    
+  }      
+
+}  
 
 LazyDatabase _openConnection() {
   // the LazyDatabase util lets us find the right location for the file async.
